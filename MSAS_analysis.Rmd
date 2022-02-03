@@ -37,22 +37,19 @@ source("./Script/Data_processing.R")
 
 What is the *total causal effect* of **limiting longterm illness** on **feeling optimistic about the future**?
 
-# Drawing the Directed Acyclic Graph (DAG)
+## Drawing the Directed Acyclic Graph (DAG)
 
-To calculate the desired causal effect, we must first specify all key variables which might be relevant for this context.
-
-Examples of key variables therefore include:
+To calculate the desired causal effect, we must first specify all key variables which might be relevant for this context. Examples of key variables therefore include:
 
 * Age
 * Employment status
 * Self-assessed health status
 * Therapy
 
-We can then construct a DAG which specifies the hypothesised causal relationships amongst the key variables identified.
+We can then construct a DAG which specifies the *hypothesised causal relationships* amongst the key variables identified.
 
 ```{r download-dag}
-# Download published DAG from dagitty.net
-# and create 'tidy' DAG with node status (i.e. exposure/outcome) & variable labels
+# Import published DAG from dagitty.net & create 'tidy' DAG 
 dag <- downloadGraph(x = "dagitty.net/m3DXjao") 
 tidy_dag <- dag %>%
   tidy_dagitty %>%
@@ -60,20 +57,16 @@ tidy_dag <- dag %>%
   mutate(label = str_replace_all(string = name, 
                                  pattern = "_", 
                                  replacement = "\n")) 
-```
-
-```{r plot-dag, echo = FALSE}
 # Plot DAG
-plot_dag <- tidy_dag %>%
+tidy_dag %>%
   ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
   geom_dag_edges() +
   geom_dag_point(aes(color = status)) + 
   geom_dag_label_repel(aes(label = label)) +
   theme_dag(plot.background = element_rect(colour = "black", fill = NA))
-plot_dag
 ```
 
-# Calculating the Minimally Sufficient Adjustment Set (MSAS)
+## Calculating the Minimally Sufficient Adjustment Set (MSAS)
 
 Using the `dagitty` package, we can calculate the minimally sufficient adjustment set (MSAS).
 
@@ -91,20 +84,19 @@ msas
 We can visualise these nodes on the DAG as common causes of the exposure and outcome.
 
 ```{r plot-msas, echo = FALSE}
-# Plot MSAS
-plot_msas <- tidy_dag %>%
+# Plot DAG with MSAS
+tidy_dag %>%
   mutate(status = ifelse(name %in% msas, "msas", status)) %>%
   ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
   geom_dag_edges() +
   geom_dag_point(aes(color = status)) + 
   geom_dag_label_repel(aes(label = label)) +
   theme_dag(plot.background = element_rect(colour = "black", fill = NA))
-plot_msas
 ```
 
-# Estimating the Causal Effect
+## Estimating the Causal Effect
 
-To estimate this causal effect, we use data collected by the Health Survey for England (HSE) in 2019:
+To estimate the causal effect of limiting longterm illness on feeling optimistic about the future, we use data collected by the Health Survey for England (HSE) in 2019:
 
 ```{r data-peek, echo = FALSE}
 data
@@ -142,7 +134,7 @@ exp_conf_high <- tidy_summary %>%
   round(digits = 3)
 ```
 
-This model estimates that having an LLTI causes the odds of feeling optimistic about the future to decrease by `r (1 - exp_coef)*100` percent `r paste0("(95% CI: ", paste((1 - exp_conf_high)*100, (1 - exp_conf_low)*100, sep = ", " ), ")")`.
+This model estimates that having a limiting longterm illness causes the odds of feeling optimistic about the future to decrease by **`r (1 - exp_coef)*100` percent** `r paste0("(95% CI: ", paste((1 - exp_conf_high)*100, (1 - exp_conf_low)*100, sep = ", " ), ")")`.
 
 
 ```{r tidy-summary, echo = FALSE}
