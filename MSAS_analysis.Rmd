@@ -112,11 +112,14 @@ mod <- glm(formula = Optimism ~ LLTI + Age + Sex + Ethnicity + Education + BMI +
            data = data)
 ```
 
-
 ```{r extract-coefficient, echo = FALSE}
-# Create tidy summary of fitted model
-tidy_summary <- tidy(mod, conf.int = TRUE, exponentiate = TRUE) %>%
+# Create tidy summaries of fitted model:
+# (1) all coefficients except intercept
+full_tidy_summary <- tidy(mod, conf.int = TRUE, exponentiate = TRUE) %>%
   select(term, estimate, conf.low, conf.high, p.value) %>%
+  filter(!str_detect(term, "Intercept"))
+# (2) exposure coefficient only
+tidy_summary <- full_tidy_summary %>%
   filter(str_detect(term, "LLTI"))
 
 # Extract exposure coefficient from tidy summary
@@ -136,9 +139,26 @@ exp_conf_high <- tidy_summary %>%
 
 This model estimates that having a limiting longterm illness causes the odds of feeling optimistic about the future to decrease by **`r (1 - exp_coef)*100` percent** `r paste0("(95% CI: ", paste((1 - exp_conf_high)*100, (1 - exp_conf_low)*100, sep = ", " ), ")")`.
 
-
 ```{r tidy-summary, echo = FALSE}
 tidy_summary
 ```
 
+```{r plot-coefficients, echo = FALSE}
+full_tidy_summary %>%
+  ggplot(aes(x = term, y = estimate)) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 14),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+        plot.background = element_rect(colour = "black", fill = NA)) +
+  labs(y = "Odds") +
+  geom_hline(yintercept = 1) +
+  geom_point(aes(color = str_detect(term, "LLTI"), size = 2)) +
+  geom_linerange(aes(x = term, ymin = conf.low, ymax = conf.high,
+                     color = str_detect(term, "LLTI"), lwd = 1.5)) +
+  scale_x_discrete(limits = full_tidy_summary %>% pull(term),
+                   labels = function(x) str_wrap(x, width = 15)) +
+  scale_color_manual(values = c("grey80", "dodgerblue"))
+```
 
