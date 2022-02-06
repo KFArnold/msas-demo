@@ -1,7 +1,7 @@
 ---
 title: "The minimally sufficient adjustment set (MSAS) algorithm"
-author: "KFArnold"
-date: "03/02/2022"
+author: "@KFArnold"
+date: "07/02/2022"
 output: html_document
 ---
 
